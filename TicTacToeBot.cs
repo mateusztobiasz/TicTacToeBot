@@ -1,44 +1,54 @@
-﻿namespace TicTacToeBotNs
+﻿using System.Text;
+
+namespace TicTacToeBotNs
 {
     public class TicTacToeBot
     {
-        public (int, int) LastBestMove { get; private set; }
+        public (int i, int j) LastBestMove { get; private set; }
+
+        private bool botMaximizing { get; set; }
 
 
-        public int MakeMove(char[,] board, bool botTurn, int depth)
+        public TicTacToeBot(bool botMaximizing)
         {
-            if (CheckIfGameOver(board)) return EvaluatePosition(board, botTurn);
-            List<(int, int)> blankSpaces = DetermineBlankSpaces(board);
+            this.botMaximizing = botMaximizing;
+        }
 
-            if (botTurn) // maximizing player
+        public int MakeMove(char[,] board, bool maximizingPlayer, int depth)
+        {
+            (bool gameOver, int staticVal) = CheckIfGameOver(board);
+            if (gameOver) return staticVal;
+
+            List<(int, int)> blankSpaces = DetermineBlankSpaces(board);
+            if (maximizingPlayer)
             {
                 int maxVal = int.MinValue;
-                foreach ((int i, int j) blankSpace in blankSpaces)
+                foreach ((int i, int j) in blankSpaces)
                 {
-                    board[blankSpace.i, blankSpace.j] = 'O';
-                    int val = MakeMove(board, !botTurn, depth++);
+                    board[i, j] = 'O';
+                    int val = MakeMove(board, false, depth + 1);
+                    board[i, j] = '_';
                     if (val > maxVal)
                     {
                         maxVal = val;
-                        if (depth == 0) LastBestMove = blankSpace;
+                        if (depth == 0) LastBestMove = (i, j);
                     }
-                    board[blankSpace.i, blankSpace.j] = '_';
                 }
                 return maxVal;
             }
-            else // minimazing player
+            else
             {
                 int minVal = int.MaxValue;
-                foreach ((int i, int j) blankSpace in blankSpaces)
+                foreach ((int i, int j) in blankSpaces)
                 {
-                    board[blankSpace.i, blankSpace.j] = 'X';
-                    int val = MakeMove(board, !botTurn, depth++);
+                    board[i, j] = 'X';
+                    int val = MakeMove(board, true, depth + 1);
+                    board[i, j] = '_';
                     if (val < minVal)
                     {
                         minVal = val;
-                        if (depth == 0) LastBestMove = blankSpace;
+                        if (depth == 0) LastBestMove = (i, j);
                     }
-                    board[blankSpace.i, blankSpace.j] = '_';
                 }
                 return minVal;
             }
@@ -60,39 +70,55 @@
 
         }
 
-        private bool CheckIfGameOver(char[,] board)
+        public (bool gameOver, int val) CheckIfGameOver(char[,] board)
         {
+            int val = EvaluatePosition(board);
+            if (val == 1 || val == -1) return (true, val);
+
             for (int i = 0; i < board.GetLength(0); i++)
             {
                 for (int j = 0; j < board.GetLength(1); j++)
                 {
-                    if (board[i, j] == '_') return false;
+                    if (board[i, j] == '_') return (false, -2);
                 }
             }
-
-            return true;
+            return (true, val);
         }
 
-        private int EvaluatePosition(char[,] board, bool botTurn)
+        public int EvaluatePosition(char[,] board)
         {
-            bool horizontalWin = (board[0, 0] == board[0, 1] && board[0, 1] == board[0, 2]) ||
-                                 (board[1, 0] == board[1, 1] && board[1, 1] == board[1, 2]) ||
-                                 (board[2, 0] == board[2, 1] && board[2, 1] == board[2, 2]);
 
-            bool verticalWin = (board[0, 0] == board[1, 0] && board[1, 0] == board[2, 0]) ||
-                               (board[0, 1] == board[1, 1] && board[1, 1] == board[2, 1]) ||
-                               (board[0, 2] == board[1, 2] && board[1, 2] == board[2, 2]);
+            bool horizontalWinX = (board[0, 0] == 'X' && board[0, 1] == 'X' && board[0, 2] == 'X') ||
+                                 (board[1, 0] == 'X' && board[1, 1] == 'X' && board[1, 2] == 'X') ||
+                                 (board[2, 0] == 'X' && board[2, 1] == 'X' && board[2, 2] == 'X');
 
-            bool diagonalWin = (board[0, 0] == board[1, 1] && board[1, 1] == board[2, 2]) ||
-                               (board[2, 0] == board[1, 1] && board[1, 1] == board[0, 2]);
+            bool verticalWinX = (board[0, 0] == 'X' && board[1, 0] == 'X' && board[2, 0] == 'X') ||
+                               (board[0, 1] == 'X' && board[1, 1] == 'X' && board[2, 1] == 'X') ||
+                               (board[0, 2] == 'X' && board[1, 2] == 'X' && board[2, 2] == 'X');
 
-            bool result = horizontalWin || verticalWin || diagonalWin;
+            bool diagonalWinX = (board[0, 0] == 'X' && board[1, 1] == 'X' && board[2, 2] == 'X') ||
+                               (board[2, 0] == 'X' && board[1, 1] == 'X' && board[0, 2] == 'X');
 
-            if (result && botTurn) return (board[0, 0] == 'O') ? 1 : -1;
-            else if (result && !botTurn) return (board[0, 0] == 'X') ? 1 : -1;
+
+            bool horizontalWinO = (board[0, 0] == 'O' && board[0, 1] == 'O' && board[0, 2] == 'O') ||
+                                (board[1, 0] == 'O' && board[1, 1] == 'O' && board[1, 2] == 'O') ||
+                                (board[2, 0] == 'O' && board[2, 1] == 'O' && board[2, 2] == 'O');
+
+            bool verticalWinO = (board[0, 0] == 'O' && board[1, 0] == 'O' && board[2, 0] == 'O') ||
+                               (board[0, 1] == 'O' && board[1, 1] == 'O' && board[2, 1] == 'O') ||
+                               (board[0, 2] == 'O' && board[1, 2] == 'O' && board[2, 2] == 'O');
+
+            bool diagonalWinO = (board[0, 0] == 'O' && board[1, 1] == 'O' && board[2, 2] == 'O') ||
+                               (board[2, 0] == 'O' && board[1, 1] == 'O' && board[0, 2] == 'O');
+
+            bool resultX = horizontalWinX || verticalWinX || diagonalWinX;
+            bool resultO = horizontalWinO || verticalWinO || diagonalWinO;
+
+            if (resultX && botMaximizing) return 1;
+            else if (resultO && botMaximizing) return -1;
+            else if (resultX && !botMaximizing) return -1;
+            else if (resultO && !botMaximizing) return 1;
             else return 0;
         }
-
-
     }
 }

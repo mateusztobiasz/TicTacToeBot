@@ -114,8 +114,8 @@ namespace TicTacToeBotNs
             bool resultX = horizontalWinX || verticalWinX || diagonalWinX;
             bool resultO = horizontalWinO || verticalWinO || diagonalWinO;
 
-            if (resultX && botMaximizing) return 1;
-            else if (resultO && botMaximizing) return -1;
+            if (resultX && botMaximizing) return -1;
+            else if (resultO && botMaximizing) return 1;
             else if (resultX && !botMaximizing) return -1;
             else if (resultO && !botMaximizing) return 1;
             else return 0;
